@@ -3,7 +3,8 @@ namespace RestaurantReservation.API.DTOs.Table;
 //Sent back to client when they request table info 
 public class TableDto
 {
-    
+    public bool IsAvailable;
+
     public int Id { get; set; }
     public int TableNumber { get; set; } 
     public int Capacity { get; set; }
@@ -28,9 +29,7 @@ public class TableDto
         public int Capacity { get; set; }
         
         public string Location { get; set; } = string.Empty;
-       
-        public bool isAvailable { get; set; } =  true;
-        
+        public bool IsAvailable { get; set; }
     }
     
     
