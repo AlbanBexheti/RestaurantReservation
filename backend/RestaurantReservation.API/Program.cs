@@ -9,6 +9,7 @@ using RestaurantReservation.API.Repositories.Interface;
 using RestaurantReservation.API.Repositories.Interfaces;
 using RestaurantReservation.API.Services;
 using RestaurantReservation.API.Services.Interfaces;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,6 +128,12 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options => 
+    {
+        options.WithTitle("Restaurant Reservation API")
+            .WithTheme(ScalarTheme.DeepSpace) // Try themes like 'Mars' or 'Moon'
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+    });
 }
 
 app.UseHttpsRedirection();
