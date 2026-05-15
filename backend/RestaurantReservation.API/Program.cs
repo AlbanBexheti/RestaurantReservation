@@ -2,6 +2,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using RestaurantReservation.API.Middleware;
+using Scalar.AspNetCore;
 using RestaurantReservation.API.Data;
 using RestaurantReservation.API.Interfaces;
 using RestaurantReservation.API.Repositories;
@@ -9,7 +11,6 @@ using RestaurantReservation.API.Repositories.Interface;
 using RestaurantReservation.API.Repositories.Interfaces;
 using RestaurantReservation.API.Services;
 using RestaurantReservation.API.Services.Interfaces;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -125,18 +126,18 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── MIDDLEWARE PIPELINE ───────────────────────────────────────────────────────
+
+// Must be FIRST - catches all exceptions from every middleware below it
+app.UseMiddleware<ExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(options => 
-    {
-        options.WithTitle("Restaurant Reservation API")
-            .WithTheme(ScalarTheme.DeepSpace) // Try themes like 'Mars' or 'Moon'
-            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
-    });
+    app.MapScalarApiReference(); // modern API testing UI
 }
 
-app.UseHttpsRedirection();
+
+;
 app.UseCors("AllowFrontend");
 
 // Order matters! Authentication must come before Authorization
