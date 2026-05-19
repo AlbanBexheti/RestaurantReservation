@@ -8,69 +8,74 @@ namespace RestaurantReservation.API.Services
 {
     public class TableService : ITableService
     {
-        // Repository is injected - service never touches DbContext directly
         private readonly ITableRepository _repo;
+        private readonly ILogger<TableService> _logger;
 
-        public TableService(ITableRepository repo)
+        public TableService(ITableRepository repo, ILogger<TableService> logger)
         {
-            _repo = repo;
+            _repo   = repo;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<TableDto>> GetAllAsync()
         {
+            _logger.LogInformation("Fetching all tables");
             var tables = await _repo.GetAllAsync();
-
-            // Map each Table model to a TableDto
-            // We never return raw models from the service layer
             return tables.Select(t => MapToDto(t));
         }
 
         public async Task<TableDto?> GetByIdAsync(int id)
         {
+            _logger.LogInformation("Fetching table with ID {Id}", id);
             var table = await _repo.GetByIdAsync(id);
-
-            // If not found return null - controller will handle 404
-            if (table == null) return null;
-
+            if (table == null)
+            {
+                _logger.LogWarning("Table with ID {Id} not found", id);
+                return null;
+            }
             return MapToDto(table);
         }
-        
+
         public async Task<TableDto> CreateAsync(TableDto.CreateTableDto dto)
         {
-            // Map DTO → Model before saving to database
+            _logger.LogInformation("Creating table number {TableNumber}", dto.TableNumber);
             var table = new Table
             {
                 TableNumber = dto.TableNumber,
                 Capacity    = dto.Capacity,
                 Location    = dto.Location,
-                IsAvailable = true  // new tables are available by default
+                IsAvailable = true
             };
-
             var created = await _repo.CreateAsync(table);
+            _logger.LogInformation("Table {TableNumber} created with ID {Id}", created.TableNumber, created.Id);
             return MapToDto(created);
         }
 
         public async Task<TableDto?> UpdateAsync(int id, TableDto.UpdateTableDto dto)
         {
+            _logger.LogInformation("Updating table with ID {Id}", id);
             var table = await _repo.GetByIdAsync(id);
-            if (table == null) return null;
-
-            // Only update the fields that were sent
+            if (table == null)
+            {
+                _logger.LogWarning("Table with ID {Id} not found for update", id);
+                return null;
+            }
             table.Capacity    = dto.Capacity;
             table.Location    = dto.Location;
             table.IsAvailable = dto.IsAvailable;
-
             var updated = await _repo.UpdateAsync(table);
             return MapToDto(updated);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            return await _repo.DeleteAsync(id);
+            _logger.LogInformation("Deleting table with ID {Id}", id);
+            var result = await _repo.DeleteAsync(id);
+            if (!result)
+                _logger.LogWarning("Table with ID {Id} not found for deletion", id);
+            return result;
         }
 
-        // Private helper - converts a Table model to a TableDto
-        // Keeps mapping logic in one place - easy to update
         private TableDto MapToDto(Table t) => new TableDto
         {
             Id          = t.Id,

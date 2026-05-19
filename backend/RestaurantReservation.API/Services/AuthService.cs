@@ -14,34 +14,39 @@ namespace RestaurantReservation.API.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly ILogger<AuthService> _logger;
 
-        // IConfiguration lets us read from appsettings.json
-        public AuthService(AppDbContext context, IConfiguration config)
+        public AuthService(AppDbContext context, IConfiguration config, ILogger<AuthService> logger)
         {
             _context = context;
             _config  = config;
+            _logger  = logger;
         }
 
         public async Task<AuthResponseDto?> RegisterAsync(RegisterDto dto)
         {
-            // Check if email is already taken
-            var exists = await _context.Users
-                .AnyAsync(u => u.Email == dto.Email);
-            if (exists) return null;
+            _logger.LogInformation("Register attempt for email {Email}", dto.Email);
 
-            // Hash the password - NEVER store plain text
+            var exists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+            if (exists)
+            {
+                _logger.LogWarning("Registration failed - email {Email} already taken", dto.Email);
+                return null;
+            }
+
             var user = new User
             {
                 FullName     = dto.FullName,
                 Email        = dto.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Role         = "Customer"  // new users are always customers
+                Role         = "Customer"
             };
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            // Generate and return JWT token
+            _logger.LogInformation("User {Email} registered successfully with ID {Id}", user.Email, user.Id);
+
             return new AuthResponseDto
             {
                 Token    = GenerateToken(user),
@@ -53,14 +58,17 @@ namespace RestaurantReservation.API.Services
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
-            // Find user by email
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == dto.Email);
+            _logger.LogInformation("Login attempt for email {Email}", dto.Email);
 
-            // Return null if user not found OR password is wrong
-            // BCrypt.Verify compares plain password against the hash
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            {
+                _logger.LogWarning("Login failed for email {Email} - invalid credentials", dto.Email);
                 return null;
+            }
+
+            _logger.LogInformation("User {Email} logged in successfully", dto.Email);
 
             return new AuthResponseDto
             {
@@ -71,40 +79,26 @@ namespace RestaurantReservation.API.Services
             };
         }
 
-        // Generate a JWT token for a user
         private string GenerateToken(User user)
         {
-            // Claims are pieces of info stored INSIDE the token
-            // The API reads these on every request - no database needed
             var claims = new[]
             {
-                // NameIdentifier stores the user's ID
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                // Email stores the user's email
-                new Claim(ClaimTypes.Email, user.Email),
-                // Role stores "Admin" or "Customer"
-                // This is what [Authorize(Roles = "Admin")] checks
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Email,          user.Email),
+                new Claim(ClaimTypes.Role,           user.Role)
             };
 
-            // Read the secret key from appsettings.json
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["JwtSettings:Secret"]!));
-
-            // Sign the token with the key using HMAC SHA256 algorithm
+            var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Secret"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Build the token
             var token = new JwtSecurityToken(
-                issuer:   _config["JwtSettings:Issuer"],
-                audience: _config["JwtSettings:Audience"],
-                claims:   claims,
-                expires:  DateTime.UtcNow.AddMinutes(
-                    double.Parse(_config["JwtSettings:ExpiryInMinutes"]!)),
+                issuer:             _config["JwtSettings:Issuer"],
+                audience:           _config["JwtSettings:Audience"],
+                claims:             claims,
+                expires:            DateTime.UtcNow.AddMinutes(double.Parse(_config["JwtSettings:ExpiryInMinutes"]!)),
                 signingCredentials: creds
             );
 
-            // Serialize token to string e.g. "eyJhbGci..."
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
