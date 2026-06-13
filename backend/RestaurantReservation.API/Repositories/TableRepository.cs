@@ -38,7 +38,7 @@ namespace RestaurantReservation.API.Repositories
         public async Task<Table> CreateAsync(Table table)
         {
             // AddAsync() stages the new table (doesn't save yet)
-            await _context.Tables.AddAsync(table);
+            _context.Tables.Add(table);
 
             // SaveChangesAsync() actually runs the INSERT INTO SQL
             await _context.SaveChangesAsync();
@@ -58,14 +58,15 @@ namespace RestaurantReservation.API.Repositories
             return table;
         }
 
-        // Deletes a table by ID
+        // Delete a table by ID
         public async Task<bool> DeleteAsync(int id)
         {
             var table = await _context.Tables.FindAsync(id);
 
-            // If table is not existing returns false
+            // If table doesn't exist, return false
             if (table == null) return false;
-            
+
+            // Remove() stages the deletion
             _context.Tables.Remove(table);
 
             // SaveChangesAsync() runs the DELETE SQL

@@ -11,7 +11,7 @@ using RestaurantReservation.API.Data;
 namespace RestaurantReservation.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260510234807_InitialCreate")]
+    [Migration("20260522093831_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -22,9 +22,9 @@ namespace RestaurantReservation.API.Migrations
 
             modelBuilder.Entity("RestaurantReservation.API.Models.MenuItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Category")
                         .IsRequired()

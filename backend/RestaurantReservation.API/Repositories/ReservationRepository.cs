@@ -92,7 +92,7 @@ namespace RestaurantReservation.API.Repositories
         // Create a new reservation
         public async Task<Reservation> CreateAsync(Reservation reservation)
         {
-            await _context.Reservations.AddAsync(reservation);
+            _context.Reservations.Add(reservation);
             await _context.SaveChangesAsync();
             return reservation;
         }

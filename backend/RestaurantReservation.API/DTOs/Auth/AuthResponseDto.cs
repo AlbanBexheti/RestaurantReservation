@@ -5,7 +5,7 @@ namespace RestaurantReservation.API.DTOs.Auth;
 
 public class AuthResponseDto
 {
-    //The JWT token the client mus send in every future request
+    //The JWT token the client must send in every future request
     public string Token { get; set; } = string.Empty;
     
     //Basic user info 

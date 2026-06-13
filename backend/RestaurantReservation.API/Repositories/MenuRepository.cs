@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantReservation.API.Data;
 using RestaurantReservation.API.Interfaces;
 using RestaurantReservation.API.Models;
-using RestaurantReservation.API.Repositories.Interface;
 using RestaurantReservation.API.Repositories.Interfaces;
 
 namespace RestaurantReservation.API.Repositories
@@ -20,11 +19,6 @@ namespace RestaurantReservation.API.Repositories
         public async Task<IEnumerable<MenuItem>> GetAllAsync()
         {
             return await _context.MenuItems.ToListAsync();
-        }
-
-        public Task<IEnumerable<MenuItem>> GetAvailableAsync(int id)
-        {
-            throw new NotImplementedException();
         }
 
         // Get only available items (Customer use)
@@ -54,7 +48,7 @@ namespace RestaurantReservation.API.Repositories
         // Add a new menu item
         public async Task<MenuItem> CreateAsync(MenuItem menuItem)
         {
-            await _context.MenuItems.AddAsync(menuItem);
+            _context.MenuItems.Add(menuItem);
             await _context.SaveChangesAsync();
             return menuItem;
         }
