@@ -23,10 +23,6 @@ namespace RestaurantReservation.API.Services
             _logger          = logger;
         }
 
-        public ReservationService(IReservationRepository reservationRepo, ITableRepository tableRepo)
-        {
-            throw new NotImplementedException();
-        }
 
         public async Task<IEnumerable<ReservationDto>> GetAllAsync()
         {
