@@ -1,7 +1,8 @@
+
 using Moq;
+using Microsoft.Extensions.Logging;
 using RestaurantReservation.API.DTOs.Reservation;
 using RestaurantReservation.API.Models;
-using RestaurantReservation.API.Repositories.Interface;
 using RestaurantReservation.API.Repositories.Interfaces;
 using RestaurantReservation.API.Services;
 
@@ -21,9 +22,12 @@ namespace RestaurantReservation.Tests.Services
             _mockTableRepo       = new Mock<ITableRepository>();
 
             // Inject mocks into the service - same as DI in Program.cs
+            // Logger is mocked too - we don't care about log output in tests
+            var mockLogger = new Mock<ILogger<ReservationService>>();
             _service = new ReservationService(
                 _mockReservationRepo.Object,
-                _mockTableRepo.Object);
+                _mockTableRepo.Object,
+                mockLogger.Object);
         }
 
         // ── TEST 1 ────────────────────────────────────────────────────────
